@@ -101,6 +101,8 @@ extern "C" {
  */
 #define FJSON_OBJECT_KEY_IS_CONSTANT (1<<2)
 
+#define FJSON_OBJECT_MERGE_HONOR_PARENT (1)
+
 #undef FALSE
 #define FALSE ((fjson_bool)0)
 
@@ -655,6 +657,18 @@ extern int fjson_object_get_string_len(struct fjson_object *obj);
  */
 int fjson_object_get_member_count(struct fjson_object *jso);
 
+/** Merge the second json object into the first json object.
+ *
+ * @param jso_parent the fjson_object instance merged into
+ * @param jso the fjson_object instance merged; this fjson_object will be consumed.
+ * @param opts specifying the json key conflict behaviour;
+ * if (opts & FJSON_OBJECT_MERGE_HONOR_PARENT) is non-zero, jso_parent is honored.
+ * Otherwise, jso is.
+ * @returns 0 if successful; non-zero otherwise.
+ */
+int fjson_object_object_merge(struct fjson_object *const __restrict__ jso_parent,
+	struct fjson_object *__restrict__ jso,
+	const unsigned opts);
 
 /* The following is a source code compatibility layer
  * in regard to json-c.
@@ -670,6 +684,8 @@ int fjson_object_get_member_count(struct fjson_object *jso);
 #define JSON_C_TO_STRING_NOZERO FJSON_TO_STRING_NOZERO
 #define JSON_C_OBJECT_ADD_KEY_IS_NEW FJSON_OBJECT_ADD_KEY_IS_NEW
 #define JSON_C_OBJECT_KEY_IS_CONSTANT FJSON_OBJECT_KEY_IS_CONSTANT
+
+#define JSON_C_OBJECT_MERGE_HONOR_MESSAGE FJSON_OBJECT_MERGE_HONOR_MESSAGE
 
 
 /* forward structure definitions */
@@ -731,6 +747,8 @@ typedef struct fjson_tokener fjson_tokener;
 #define json_object_get_int64 fjson_object_get_int64
 #define json_object_get_string_len fjson_object_get_string_len
 #define json_object_get_member_count fjson_object_get_member_count
+
+#define json_object_object_merge fjson_object_object_merge
 
 
 #endif

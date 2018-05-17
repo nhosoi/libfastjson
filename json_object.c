@@ -462,6 +462,66 @@ done:
 	return;
 }
 
+/*
+ * iso is going to be consumed
+ */
+int
+fjson_object_object_merge(struct fjson_object *const __restrict__ jso_parent,
+	struct fjson_object *__restrict__ jso,
+	const unsigned opts)
+{
+	int rc = 0; /* success */
+	// We lookup the entry and replace the value, rather than just deleting
+	// and re-adding it, so the existing key remains valid.
+	struct _fjson_child *chld;
+	struct _fjson_child_pg *pg = &jso->o.c_obj.pg;
+	struct _fjson_child_pg *del = NULL; /* do NOT delete first elt! */
+	while (pg != NULL) {
+		for (int i = 0 ; i < FJSON_OBJECT_CHLD_PG_SIZE ; ++i) {
+			if (pg->children[i].k == NULL)
+				continue; /* indicates empty slot */
+				
+			chld = _fjson_find_child(jso_parent, pg->children[i].k);
+			if (chld != NULL) {
+				if (opts & FJSON_OBJECT_MERGE_HONOR_PARENT) {
+					if(!pg->children[i].flags.k_is_constant) {
+						free ((void*)pg->children[i].k);
+						pg->children[i].k = NULL;
+					}
+					fjson_object_put (pg->children[i].v);
+				} else {
+					if (chld->v != NULL)
+						fjson_object_put(chld->v);
+					chld->v = pg->children[i].v;
+					if(!pg->children[i].flags.k_is_constant) {
+						free ((void*)pg->children[i].k);
+						pg->children[i].k = NULL;
+					}
+				}
+				continue;
+			}
+
+			/* insert new entry */
+			if ((chld = fjson_child_get_empty_etry(jso_parent)) == NULL) {
+				rc = 1; /* ENOMEM */
+				goto done;
+			}
+			chld->k = pg->children[i].k;
+			chld->flags.k_is_constant = pg->children[i].flags.k_is_constant;
+			chld->v = pg->children[i].v;
+			++jso_parent->o.c_obj.nelem;
+		}
+
+		pg = pg->next;
+		free(del);
+		del = pg;
+	}
+
+done:
+	fjson_object_generic_delete(jso);
+	return rc;
+}
+
 void fjson_object_object_add(struct fjson_object *const __restrict__ jso,
 	const char *const key,
 	struct fjson_object *const val)

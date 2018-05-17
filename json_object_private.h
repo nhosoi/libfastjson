@@ -84,7 +84,7 @@ struct fjson_object
 			char *ptr;
 			char data[LEN_DIRECT_STRING_DATA];
 			} str;
-		int len;
+			int len;
 		} c_string;
 	} o;
 	DEF_ATOMIC_HELPER_MUT(_mut_ref_count)
